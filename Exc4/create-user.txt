@@ -1,0 +1,16 @@
+Скрипты для создания пользователя "developer". Остальные пользователи создаются аналогично.
+
+Генерируем ключ пользователя:
+openssl genrsa -out developer.key 4096
+
+Создаем запрос на подписание:
+openssl req -new -key developer.key -out developer.csr -subj "/CN=developer/O=my-organisation"
+
+Подписываем запрос с помощью сертификатов k8s кластера, с которым будем работать (размещены в текущей директории):
+openssl x509 -req -in developer.csr -CA ./ca.crt -CAkey ./ca.key -CAcreateserial -out developer.crt -days 500
+
+Добавляем пользователя с подписанным сертификатом и сгенерированным ключом в конфиг кластера:
+kubectl config set-credentials developer --client-certificate=developer.crt --client-key=developer.key
+
+Устанавливаем контекст кластера использующий нового пользователя:
+kubectl config set-context minikiubeDev --cluster=minikube --namespace=default --user=developer
